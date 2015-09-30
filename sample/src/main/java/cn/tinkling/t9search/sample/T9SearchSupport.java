@@ -151,16 +151,10 @@ public final class T9SearchSupport {
 
         private int getMatchLength(T9MatchInfo matchInfo) {
             int len = 0;
-            T9MatchInfo temp = matchInfo;
-            do {
-                len += temp.length();
-
-                if (temp.hasNext()) {
-                    temp = temp.next();
-                } else {
-                    break;
-                }
-            } while (true);
+            while (matchInfo != null) {
+                len += matchInfo.length();
+                matchInfo = matchInfo.next();
+            }
 
             return len;
         }
