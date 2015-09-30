@@ -1,6 +1,5 @@
 package cn.tinkling.t9search.sample;
 
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.database.Cursor;
 import android.os.AsyncTask;
@@ -54,8 +53,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final Dialog progressDialog = new ProgressDialog.Builder(MainActivity.this)
-                .setCancelable(false).create();
+        final ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setIndeterminate(true);
+        progressDialog.setCancelable(false);
+
         new AsyncTask<Void, Void, List<Contact>>() {
 
             @Override
