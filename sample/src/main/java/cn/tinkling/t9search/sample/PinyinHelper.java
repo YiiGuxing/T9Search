@@ -14,6 +14,9 @@ import java.util.ArrayList;
 
 import cn.tinkling.t9.PinyinToken;
 
+/**
+ * 汉字转拼音工具
+ */
 public final class PinyinHelper {
 
     private static final String TAG = "PinyinHelper";
@@ -30,8 +33,11 @@ public final class PinyinHelper {
     private PinyinHelper() {
     }
 
+    /**
+     * 汉字转拼音
+     */
     @NonNull
-    public static ArrayList<PinyinToken> get(final String input) {
+    public static ArrayList<PinyinToken> getPinyinTokens(final String input) {
         final ArrayList<PinyinToken> tokens = new ArrayList<>();
         if (TextUtils.isEmpty(input)) {
             // return empty tokens.

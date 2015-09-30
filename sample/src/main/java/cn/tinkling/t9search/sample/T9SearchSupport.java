@@ -18,14 +18,14 @@ import cn.tinkling.t9.T9Utils;
 public final class T9SearchSupport {
 
     /**
-     * 构建T9键
+     * 生成T9键
      *
      * @param input 输入
      * @return T9键
      */
     @NonNull
     public static String buildT9Key(String input) {
-        return T9Utils.buildT9Key(PinyinHelper.get(input));
+        return T9Utils.buildT9Key(PinyinHelper.getPinyinTokens(input));
     }
 
     /**
@@ -53,6 +53,9 @@ public final class T9SearchSupport {
         return filtered;
     }
 
+    /**
+     * 高亮文本
+     */
     public static SpannableStringBuilder highLight(SpannableStringBuilder ssb,
                                                    T9MatchInfo matchInfo,
                                                    String text,
@@ -60,18 +63,18 @@ public final class T9SearchSupport {
         ssb.clear();
         if (!TextUtils.isEmpty(text)) {
             ssb.append(text);
-        }
 
-        final int maxLength = text.length();
-        while (matchInfo != null) {
-            int start = matchInfo.start();
-            int end = start + matchInfo.length();
-            if ((matchInfo.found() && start < maxLength && end <= maxLength)) {
-                ssb.setSpan(new ForegroundColorSpan(color), start, end,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            final int maxLength = text.length();
+            while (matchInfo != null) {
+                int start = matchInfo.start();
+                int end = start + matchInfo.length();
+                if ((matchInfo.found() && start < maxLength && end <= maxLength)) {
+                    ssb.setSpan(new ForegroundColorSpan(color), start, end,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+
+                matchInfo = matchInfo.next();
             }
-
-            matchInfo = matchInfo.next();
         }
 
         return ssb;
