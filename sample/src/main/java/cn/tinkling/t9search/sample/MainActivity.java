@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
             holder.name.setText(T9SearchSupport.highLight(mHighLightBuffer, contact.nameMatchInfo,
                     contact.name, 0xFFFF4081));
             holder.phoneNumber.setText(T9SearchSupport.highLight(mHighLightBuffer,
-                    contact.phoneNumberMatchInfo, contact.phoneNumber, 0xA0FF4081));
+                    contact.phoneNumberMatchInfo, contact.phoneNumber, 0xAFFF4081));
 
             return convertView;
         }
