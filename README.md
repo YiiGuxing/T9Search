@@ -5,6 +5,21 @@ Android T9 search.
 
 ![preview][1]
 
+===========================================================
+
+Gradle
+
+        compile 'cn.tinkling.t9:t9search:1.0'
+
+Maven
+
+        <dependency>
+            <groupId>cn.tinkling.t9</groupId>
+            <artifactId>t9search</artifactId>
+            <version>1.0</version>
+            <type>aar</type>
+        </dependency>
+
 
 [1]: https://github.com/Tinkling/T9Search/blob/master/preview.png?raw=true
 [2]: https://github.com/Tinkling/T9Search/tree/master/sample
