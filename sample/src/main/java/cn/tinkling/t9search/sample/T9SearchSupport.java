@@ -1,21 +1,77 @@
 package cn.tinkling.t9search.sample;
 
 import android.support.annotation.NonNull;
+import android.support.v4.util.Pools;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import cn.tinkling.t9.PinyinProvider;
 import cn.tinkling.t9.T9MatchInfo;
 import cn.tinkling.t9.T9Matcher;
 import cn.tinkling.t9.T9Utils;
 
 public final class T9SearchSupport {
+
+    private static final PinyinProvider PINYIN_PROVIDER;
+    private static final HanyuPinyinOutputFormat FORMAT;
+
+    private static final Pools.SynchronizedPool<Set<String>> SET_POOL;
+
+    static {
+        FORMAT = new HanyuPinyinOutputFormat();
+        FORMAT.setCaseType(HanyuPinyinCaseType.UPPERCASE);
+        FORMAT.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+        FORMAT.setVCharType(HanyuPinyinVCharType.WITH_V);
+
+        SET_POOL = new Pools.SynchronizedPool<>(4);
+
+        PINYIN_PROVIDER = new PinyinProvider() {
+            @Override
+            public String[] getPinyin(char input) {
+                Set<String> set = SET_POOL.acquire();
+                if (set == null) {
+                    set = new HashSet<>();
+                }
+
+                try {
+                    String[] pys = PinyinHelper.toHanyuPinyinStringArray(input, FORMAT);
+                    if (pys == null)
+                        return null;
+
+                    // 去除重复
+                    set.addAll(Arrays.asList(pys));
+                    return set.toArray(new String[set.size()]);
+                } catch (BadHanyuPinyinOutputFormatCombination e) {
+                    e.printStackTrace();
+                } finally {
+                    set.clear();
+                    SET_POOL.release(set);
+                }
+
+                return null;
+            }
+        };
+    }
+
+    private T9SearchSupport() {
+    }
 
     /**
      * 生成T9键
@@ -25,7 +81,7 @@ public final class T9SearchSupport {
      */
     @NonNull
     public static String buildT9Key(String input) {
-        return T9Utils.buildT9Key(PinyinHelper.getPinyinTokens(input));
+        return T9Utils.buildT9Key(input, PINYIN_PROVIDER);
     }
 
     /**

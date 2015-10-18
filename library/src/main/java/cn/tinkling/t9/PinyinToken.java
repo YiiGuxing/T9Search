@@ -1,5 +1,6 @@
 package cn.tinkling.t9;
 
+@Deprecated
 public class PinyinToken {
 
     /**

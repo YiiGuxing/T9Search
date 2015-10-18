@@ -30,7 +30,8 @@ public final class T9Matcher {
             char initial = T9Utils.convertDigitToInitial(t9Constraint);
             int index = t9Key.indexOf(initial);
             if (index >= 0) {
-                int start = T9Utils.getWordsCount(t9Key, 0, index);
+                int begin = t9Key.substring(0, index).lastIndexOf(T9Utils.T9_KEYS_DIVIDER) + 1;
+                int start = T9Utils.getWordsCount(t9Key, begin, index);
                 matchInfo.set(start, 1);
             }
         }
@@ -54,7 +55,21 @@ public final class T9Matcher {
             return matches(t9Key, t9Constraint.charAt(0));
         }
 
-        return matchesName(t9Key, 0, t9Key.length(), t9Constraint);
+        T9MatchInfo matchInfo = new T9MatchInfo();
+        int start = 0;
+        int end;
+        do {
+            end = t9Key.indexOf(T9Utils.T9_KEYS_DIVIDER, start);
+            if (end < 0)
+                end = t9Key.length();
+
+            if (start < end)
+                matchesName(matchInfo, t9Key, start, end, t9Constraint);
+
+            start = end + 1;
+        } while (!matchInfo.found() && end < t9Key.length());
+
+        return matchInfo;
     }
 
     private static int matchesName(String t9Key, int begin, int end, int start, String t9Constraint,
@@ -63,12 +78,12 @@ public final class T9Matcher {
 
         do {
             if (nextInitialCharIndex >= end ||
-                T9Utils.isInitial(t9Key.charAt(nextInitialCharIndex))) {
+                    T9Utils.isInitial(t9Key.charAt(nextInitialCharIndex))) {
                 if (nextInitialCharIndex == end) {
                     if (t9Key.regionMatches(start + 1, t9Constraint, cStart + 1,
                             -1 + (t9Constraint.length() - cStart))) {
-                        bitSet.set(start - 1,
-                                ((start - begin) + t9Constraint.length()) - cStart);
+                        bitSet.set(start - begin,
+                                (start - begin) + t9Constraint.length() - cStart);
                         return 1;
                     } else {
                         return 0;
@@ -80,7 +95,7 @@ public final class T9Matcher {
         } while (true);
 
         if (T9Utils.convertDigitToInitial(t9Constraint.charAt(cStart + 1)) ==
-            t9Key.charAt(nextInitialCharIndex)) {
+                t9Key.charAt(nextInitialCharIndex)) {
             if (t9Constraint.length() == cStart + 2) {
                 bitSet.set(start - begin);
                 bitSet.set(nextInitialCharIndex - begin);
@@ -112,8 +127,8 @@ public final class T9Matcher {
         }
 
         if (T9Utils.convertDigitToInitial(t9Constraint.charAt(cStart + spanLength)) ==
-            t9Key.charAt(nextInitialCharIndex)
-            && t9Key.regionMatches(start + 1, t9Constraint, cStart + 1, spanLength - 1)) {
+                t9Key.charAt(nextInitialCharIndex)
+                && t9Key.regionMatches(start + 1, t9Constraint, cStart + 1, spanLength - 1)) {
             if (1 + (cStart + spanLength) == t9Constraint.length()) {
                 bitSet.set(start - begin, 1 + (nextInitialCharIndex - begin));
                 return 2;
@@ -130,10 +145,13 @@ public final class T9Matcher {
         return 0;
     }
 
-    private static T9MatchInfo matchesName(String t9Key, int start, int end, String t9Constraint) {
-        T9MatchInfo matchInfo = new T9MatchInfo();
+    private static void matchesName(@NonNull T9MatchInfo matchInfo,
+                                    @NonNull String t9Key,
+                                    int start,
+                                    int end,
+                                    @NonNull String t9Constraint) {
         if (end - start < t9Constraint.length())
-            return matchInfo;
+            return;
 
         final int maxLength = 1 + (end - t9Constraint.length());
         final char first = T9Utils.convertDigitToInitial(t9Constraint.charAt(0));
@@ -158,7 +176,7 @@ public final class T9Matcher {
 
             int matchCount = matchesName(t9Key, start, end, index, t9Constraint, 0, bitSet);
             if (matchCount > 0) {
-                setMatchResult(t9Key, matchInfo, bitSet);
+                setMatchResult(t9Key, matchInfo, bitSet, start);
                 break;
             }
 
@@ -168,19 +186,17 @@ public final class T9Matcher {
         if (bitSet != null) {
             T9Utils.recycleBitSet(bitSet);
         }
-
-        return matchInfo;
     }
 
-    private static void setMatchResult(String t9Key, T9MatchInfo matchInfo, BitSet bitSet) {
+    private static void setMatchResult(String t9Key, T9MatchInfo matchInfo, BitSet bitSet, int begin) {
         int wordCount = 0;
         int start = -1;
 
         final int LEN = t9Key.length();
-        for (int i = 0; i < LEN; i++) {
+        for (int i = begin; i < LEN; i++) {
             char c = t9Key.charAt(i);
-            if (i == 0 || c == ' ' || T9Utils.isInitial(c)) {
-                if (bitSet.get(i) && c != ' ') {
+            if (i == begin || c == ' ' || T9Utils.isInitial(c)) {
+                if (bitSet.get(i - begin) && c != ' ') {
                     if (start == -1) {
                         start = wordCount;
                     }

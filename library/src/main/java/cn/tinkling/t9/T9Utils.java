@@ -10,6 +10,8 @@ import java.util.List;
  */
 public final class T9Utils {
 
+    public static final char T9_KEYS_DIVIDER = ';';
+
     private static final char[] VALID_T9_KEYS = {
             '0', '1', '2', '3', '4', '5', '6',
             '7', '8', '9', '+', ',', '*', '#'
@@ -173,12 +175,12 @@ public final class T9Utils {
             if (t9c == 0)
                 t9c = ' ';
             else if (Character.isUpperCase(cSrc) || i == 0
-                     || (Character.isLetter(cSrc) && !Character.isLetter(cLast)))
+                    || (Character.isLetter(cSrc) && !Character.isLetter(cLast)))
                 t9c = convertDigitToInitial(t9c);
             else if (Character.isDigit(cSrc) && !Character.isDigit(cLast))
                 t9c = convertDigitToInitial(t9c);
-            else if (T9Utils.isValidT9Key(cSrc))
-                t9c = T9Utils.convertDigitToInitial(t9c);
+            else if (isValidT9Key(cSrc))
+                t9c = convertDigitToInitial(t9c);
 
             sb.append(t9c);
             cLast = cSrc;
@@ -231,8 +233,10 @@ public final class T9Utils {
      * @param pinyinTokens Pinyin tokens.
      * @return T9 Key.
      * @see PinyinToken
+     * @deprecated use {@link #buildT9Key(String, PinyinProvider)}.
      */
     @NonNull
+    @Deprecated
     public static String buildT9Key(@NonNull List<PinyinToken> pinyinTokens) {
         StringBuilder pinyinBuilder = getReusableStringBuilder();
 
@@ -248,4 +252,92 @@ public final class T9Utils {
         recycleStringBuilder(pinyinBuilder);
         return t9Key;
     }
+
+    @NonNull
+    private static String convertPinyinToT9Key(String py) {
+        if (py == null || py.length() == 0)
+            return " ";
+
+        StringBuilder t9KeyBuilder = getReusableStringBuilder();
+
+        for (int i = 0; i < py.length(); i++) {
+            char c = py.charAt(i);
+            if (('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z')) {
+                char t9C = formatCharToT9(c);
+                if (i == 0) {
+                    t9C = convertDigitToInitial(t9C);
+                }
+
+                t9KeyBuilder.append(t9C);
+            } else {
+                t9KeyBuilder.setLength(0);
+                t9KeyBuilder.append(' ');
+                break;
+            }
+        }
+
+        String t9Key = t9KeyBuilder.toString();
+        recycleStringBuilder(t9KeyBuilder);
+        return t9Key;
+    }
+
+    private static void insertT9Key(@NonNull StringBuilder t9KeyBuilder, @NonNull String t9Str) {
+        if (t9Str.length() == 0)
+            return;
+
+        int index = -1;
+        while ((index = t9KeyBuilder.indexOf(String.valueOf(T9_KEYS_DIVIDER), index + 1)) >= 0) {
+            t9KeyBuilder.insert(index, t9Str);
+            index += t9Str.length();
+        }
+    }
+
+    /**
+     * Build T9 Key.
+     *
+     * @param src      input.
+     * @param provider pinyin provider.
+     * @return T9 Key.
+     * @throws NullPointerException if src or provider is null.
+     */
+    @NonNull
+    public static String buildT9Key(@NonNull String src, @NonNull PinyinProvider provider) {
+        StringBuilder t9KeyBuilder = getReusableStringBuilder();
+        t9KeyBuilder.append(T9_KEYS_DIVIDER);
+
+        final int len = src.length();
+        for (int i = 0; i < len; ++i) {
+            char c = src.charAt(i);
+
+            if (/*ASCII*/c < 128 ||/*Extended Latin*/(c < 0x250 || (0x1e00 <= c && c < 0x1eff))) {
+                char t9c = convertDigitToInitial(formatCharToT9(c));
+                insertT9Key(t9KeyBuilder, String.valueOf(t9c));
+            } else {
+                String[] pinyin = provider.getPinyin(c);
+                if (pinyin == null || pinyin.length == 0) {
+                    insertT9Key(t9KeyBuilder, " ");
+                } else if (pinyin.length == 1) {
+                    insertT9Key(t9KeyBuilder, convertPinyinToT9Key(pinyin[0]));
+                } else {
+                    String temp = t9KeyBuilder.toString();
+                    StringBuilder tempBuilder = getReusableStringBuilder();
+
+                    t9KeyBuilder.setLength(0);
+                    for (String py : pinyin) {
+                        tempBuilder.setLength(0);
+                        tempBuilder.append(temp);
+                        insertT9Key(tempBuilder, convertPinyinToT9Key(py));
+                        t9KeyBuilder.append(tempBuilder);
+                    }
+                    recycleStringBuilder(tempBuilder);
+                }
+            }
+        }
+
+        t9KeyBuilder.delete(t9KeyBuilder.length() - 1, t9KeyBuilder.length());
+        String t9Key = t9KeyBuilder.toString();
+        recycleStringBuilder(t9KeyBuilder);
+        return t9Key;
+    }
+
 }
