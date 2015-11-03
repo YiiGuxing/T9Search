@@ -35,7 +35,7 @@ T9MatchInfo matchInfo = T9Matcher.matches(t9Key, constraint);
 ###Gradle
 ---------
 ```groovy
-compile 'cn.tinkling.t9:t9search:1.0'
+compile 'cn.tinkling.t9:t9search:1.1.0'
 ```
 ###Maven
 --------
@@ -43,7 +43,7 @@ compile 'cn.tinkling.t9:t9search:1.0'
 <dependency>
     <groupId>cn.tinkling.t9</groupId>
     <artifactId>t9search</artifactId>
-    <version>1.0</version>
+    <version>1.1.0</version>
     <type>aar</type>
 </dependency>
 ```
