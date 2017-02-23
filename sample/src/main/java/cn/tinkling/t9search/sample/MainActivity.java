@@ -102,10 +102,10 @@ public class MainActivity extends AppCompatActivity {
         }.execute();
     }
 
-    public void onStop() {
-        super.onStop();
+    public void onDestroy() {
         if(mProgressDialog.isShowing())
             mProgressDialog.dismiss();
+        super.onDestroy();
     }
 
     private static class ViewHolder {
