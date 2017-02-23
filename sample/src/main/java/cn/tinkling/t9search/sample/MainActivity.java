@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     List<Contact> mContactsAll;
     ContactsAdapter mContactsAdapter;
     T9Filter mT9Filter;
+    ProgressDialog mProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final ProgressDialog progressDialog = new ProgressDialog(this);
+        final ProgressDialog progressDialog = mProgressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Loading...");
         progressDialog.setIndeterminate(true);
         progressDialog.setCancelable(false);
@@ -95,9 +96,16 @@ public class MainActivity extends AppCompatActivity {
             protected void onPostExecute(List<Contact> contacts) {
                 mContactsAll = contacts;
                 mContactsAdapter.setContacts(contacts);
-                progressDialog.dismiss();
+                if(progressDialog.isShowing())
+                    progressDialog.dismiss();
             }
         }.execute();
+    }
+
+    public void onStop() {
+        super.onStop();
+        if(mProgressDialog.isShowing())
+            mProgressDialog.dismiss();
     }
 
     private static class ViewHolder {
